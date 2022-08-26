@@ -27,6 +27,15 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/modbus/modbus.h>
 
+#ifdef CONFIG_MODBUS_USER_DEFINED_FC
+#include <zephyr/sys/slist.h>
+
+struct modbus_user_fc_data {
+	sys_snode_t node;
+	struct modbus_user_fc *handler;
+};
+#endif
+
 #ifdef CONFIG_MODBUS_FP_EXTENSIONS
 #define MODBUS_FP_EXTENSIONS_ADDR		5000
 #else
@@ -144,7 +153,10 @@ struct modbus_context {
 #endif
 	/* Unit ID */
 	uint8_t unit_id;
-
+#ifdef CONFIG_MODBUS_USER_DEFINED_FC
+	/* A linked list of function code, handler pairs */
+	sys_slist_t user_defined_cbs;
+#endif
 };
 
 /**

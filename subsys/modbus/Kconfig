@@ -78,6 +78,22 @@ config MODBUS_FC08_DIAGNOSTIC
 	help
 	  Enable function code 08 Diagnostic support
 
+config MODBUS_USER_DEFINED_FC
+	bool "Enable user defined custom function code support"
+	depends on MODBUS_SERVER
+	default n
+	help
+	  Allow users to define non-standard function code handlers
+
+config MODBUS_USER_DEFINED_FC_MAX_COUNT
+	int "Maximum number of supported user defined codes"
+	depends on MODBUS_USER_DEFINED_FC
+    range 1 19
+    default 19
+	help
+	  Reserve memory for non-standard function code handlers
+
+
 module = MODBUS
 module-str = Modbus Support
 module-help = Sets log level for Modbus support

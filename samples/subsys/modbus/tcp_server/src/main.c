@@ -26,6 +26,17 @@ static const struct gpio_dt_spec led_dev[] = {
 	GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios),
 };
 
+static int custom_handler(const int iface, const struct modbus_adu *adu, void *user_data) {
+	LOG_INF("Custom Modbus handler called");
+	return true;
+}
+
+static const struct modbus_user_fc custom = {
+	.callback = custom_handler,
+	.function_code = 101,
+	.user_data = NULL,
+};
+
 static int init_leds(void)
 {
 	int err;
@@ -36,7 +47,7 @@ static int init_leds(void)
 			return -ENODEV;
 		}
 
-		err = gpio_pin_configure_dt(&led_dev[i], GPIO_OUTPUT_INACTIVE);
+		err = gpio_pin_configure_dt(&led_dev[i], GPIO_OUTPUT_ACTIVE);
 		if (err != 0) {
 			LOG_ERR("Failed to configure LED%u pin", i);
 			return err;
@@ -164,7 +175,17 @@ static int init_modbus_server(void)
 		return -ENODEV;
 	}
 
-	return modbus_init_server(server_iface, server_param);
+	int rc = modbus_init_server(server_iface, server_param);
+	if (rc < 0) {
+		return rc;
+	}
+
+	rc = modbus_define_function_code(server_iface, &custom);
+	// ignore if disabled
+	if (rc == -ENOTSUP) {
+		return 0;
+	}
+	return rc;
 }
 
 static int modbus_tcp_reply(int client, struct modbus_adu *adu)

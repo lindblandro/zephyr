@@ -926,6 +926,25 @@ static bool mbs_fc16_hregs_write(struct modbus_context *ctx)
 	return true;
 }
 
+#ifdef CONFIG_MODBUS_USER_DEFINED_FC
+static modbus_raw_cb_t mbs_search_custom_fc(struct modbus_context *ctx, uint8_t fc)
+{
+	struct modbus_user_fc_data *p;
+	SYS_SLIST_FOR_EACH_CONTAINER(&ctx->user_defined_cbs, p, node) {
+		if (p->handler->function_code == fc) {
+			return p->handler->callback;
+		}
+	}
+	return NULL;
+
+}
+#else
+static modbus_raw_cb_t mbs_search_custom_fc(struct modbus_context *ctx, uint8_t fc)
+{
+	return NULL;
+}
+#endif
+
 bool modbus_server_handler(struct modbus_context *ctx)
 {
 	bool send_reply = false;
@@ -995,6 +1014,14 @@ bool modbus_server_handler(struct modbus_context *ctx)
 		break;
 
 	default:
+		if (IS_ENABLED(CONFIG_MODBUS_USER_DEFINED_FC)) {
+			modbus_raw_cb_t handler = mbs_search_custom_fc(ctx, fc);
+			if (handler != NULL) {
+				int iface = modbus_iface_get_by_ctx(ctx);
+				send_reply = handler(iface, &ctx->tx_adu, NULL);
+				break;
+			}
+		}
 		LOG_ERR("Function code 0x%02x not implemented", fc);
 		mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
 		send_reply = true;
