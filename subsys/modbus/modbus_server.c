@@ -929,10 +929,10 @@ static bool mbs_fc16_hregs_write(struct modbus_context *ctx)
 #ifdef CONFIG_MODBUS_USER_DEFINED_FC
 static modbus_raw_cb_t mbs_search_custom_fc(struct modbus_context *ctx, uint8_t fc)
 {
-	struct modbus_user_fc_data *p;
+	struct modbus_user_fc *p;
 	SYS_SLIST_FOR_EACH_CONTAINER(&ctx->user_defined_cbs, p, node) {
-		if (p->handler->function_code == fc) {
-			return p->handler->callback;
+		if (p->function_code == fc) {
+			return p->callback;
 		}
 	}
 	return NULL;

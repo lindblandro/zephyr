@@ -31,7 +31,7 @@ static int custom_handler(const int iface, const struct modbus_adu *adu, void *u
 	return true;
 }
 
-static const struct modbus_user_fc custom = {
+static struct modbus_user_fc custom = {
 	.callback = custom_handler,
 	.function_code = 101,
 	.user_data = NULL,

@@ -27,15 +27,6 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/modbus/modbus.h>
 
-#ifdef CONFIG_MODBUS_USER_DEFINED_FC
-#include <zephyr/sys/slist.h>
-
-struct modbus_user_fc_data {
-	sys_snode_t node;
-	struct modbus_user_fc *handler;
-};
-#endif
-
 #ifdef CONFIG_MODBUS_FP_EXTENSIONS
 #define MODBUS_FP_EXTENSIONS_ADDR		5000
 #else

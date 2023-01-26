@@ -31,6 +31,7 @@
 #define ZEPHYR_INCLUDE_MODBUS_H_
 
 #include <zephyr/drivers/uart.h>
+#include <zephyr/sys/slist.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -385,9 +386,10 @@ typedef int (*modbus_raw_cb_t)(const int iface, const struct modbus_adu *adu,
 				void *user_data);
 
 struct modbus_user_fc {
+	sys_snode_t node;
+	uint8_t function_code;
 	modbus_raw_cb_t callback;
 	void *user_data;
-	uint8_t function_code;
 };
 
 /**
@@ -548,15 +550,14 @@ int modbus_raw_backend_txn(const int iface, struct modbus_adu *adu);
  * function codes in the ranges 65 to 72 and 100 to 110 (decimal).
  *
  * This function registers a new handler at runtime for the given
- * function code. If the provided function code is not within the
- * ranges allowed in the spec, a negative error code is returned.
+ * function code.
  *
  * @param iface      Modbus client interface index
  * @param handler    User defined function code and callback pair
  *
- * @retval           0 If function code is within the allowed ranges
+ * @retval           0 on success
  */
-int modbus_define_function_code(const int iface, const struct modbus_user_fc *handler);
+int modbus_define_function_code(const int iface, struct modbus_user_fc *handler);
 
 #ifdef __cplusplus
 }

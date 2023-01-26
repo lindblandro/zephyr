@@ -65,10 +65,6 @@ static struct modbus_context mb_ctx_tbl[] = {
 #endif
 };
 
-#ifdef CONFIG_MODBUS_USER_DEFINED_FC
-static struct modbus_user_fc_data user_fcs[CONFIG_MODBUS_USER_DEFINED_FC_MAX_COUNT] = {0};
-#endif
-
 static void modbus_rx_handler(struct k_work *item)
 {
 	struct modbus_context *ctx;
@@ -301,44 +297,24 @@ init_server_error:
 	return rc;
 }
 
-// note: evaluates arguments more than once.
-#define VALID_USER_DEFINED_CODE(x) (IN_RANGE(x, 65, 72) || IN_RANGE(x, 100, 110))
 #ifdef CONFIG_MODBUS_USER_DEFINED_FC
-int modbus_define_function_code(const int iface, const struct modbus_user_fc *handler) {
+int modbus_define_function_code(const int iface, struct modbus_user_fc *handler) {
 	struct modbus_context *ctx = modbus_get_context(iface);
 	if (!handler) {
 		LOG_ERR("Provided function code handler was NULL");
 		return -EINVAL;
 	}
-	if (VALID_USER_DEFINED_CODE(handler->function_code)) {
-		LOG_DBG("Registerd new function code");
-		int first_free = -1;
-		for (int i = 0; i < ARRAY_SIZE(user_fcs); i++) {
-			if (user_fcs[i].handler == NULL) {
-				first_free = i;
-				break;
-			}
-		}
-		if (first_free >= 0) {
-			struct modbus_user_fc_data *fc = &user_fcs[first_free];
-			fc->handler = handler;
-			sys_slist_append(&ctx->user_defined_cbs, &fc->node);
-			return 0;
-		} else {
-			return -ENOMEM;
-		}
-	} else {
-		LOG_ERR("User defined function codes must be within ranges [65,72], [100,110]");
-		return -EINVAL;
-	}
+
+	sys_slist_append(&ctx->user_defined_cbs, &handler->node);
+	LOG_INF("Function code handler registered.");
+	return 0;
 }
 #else
 int modbus_define_function_code(const int iface, const struct modbus_user_fc *handler) {
 	return -ENOTSUP;
 }
 #endif
-#undef IN_RANGE
-#undef VALID_USER_DEFINED_CODE
+
 
 int modbus_init_client(const int iface, struct modbus_iface_param param)
 {
